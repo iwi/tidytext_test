@@ -3,7 +3,7 @@ title: "Weekly notes text analysis"
 output: html_notebook
 ---
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(readr)
 library(tibble)
 library(tidyr)
@@ -13,9 +13,10 @@ library(ggplot2)
 library(tm)
 library(topicmodels)
 library(stringr)
+library(koRpus)
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 weeknotes_ryan <- as_tibble(read_csv('weeknotes_ryan.csv', col_names = FALSE))
 names(weeknotes_ryan) <- c( "s02e01",
                             "s01e09",
@@ -43,6 +44,11 @@ tidy_notes
 
 ```{r}
 tidy_notes %>% 
+  mutate(text2 = gsub("//.", " ", text)) -> tidier_notes
+```
+
+```{r}
+tidy_notes %>% 
   mutate(text2 = gsub("[.]", " ", text)) -> tidier_notes
 ```
 
@@ -55,7 +61,18 @@ tidier_notes %>%
 tidy_tokens
 ```
 
+```{r}
+treetag(tidy_tokens$word,
+        treetagger = "manual",
+        format = "obj",
+        TT.tknz = FALSE,
+        lang = "en",
+        TT.options = list(path = "../TreeTagger/", preset = "en")) -> tidy_tokens_tagged
+```
 
+```{r}
+as_tibble(tidy_tokens_tagged@TT.res)
+```
 
 ```{r}
 data("stop_words")
@@ -63,15 +80,31 @@ other_stop_words <- c("i’d", "i’m", "i’ve")
 ```
 
 ```{r}
-tidy_tokens %>% 
-  anti_join(stop_words) %>% 
-  filter(!(word %in% other_stop_words)) -> tidier_wo_stopwords
+tidy_tokens_tagged@TT.res %>%
+  as_tibble() %>% 
+  anti_join(stop_words, by = c("token" = "word")) %>% 
+  filter(!(token %in% other_stop_words)) -> tidier_wo_stopwords
 ```
 
 
 ```{r}
 tidier_wo_stopwords %>% 
-  filter(str_detect(word, regex("i’d", ignore_case = TRUE)))
+  filter(str_detect(token, regex("i’d", ignore_case = TRUE)))
+```
+```{r}
+tidier_wo_stopwords %>% 
+  rename(word = token) -> tidier_wo_stopwords
+```
+
+```{r}
+tidier_wo_stopwords
+```
+
+
+
+```{r}
+tidier_wo_stopwords %>% 
+  count(word, sort=TRUE)
 ```
 
 ```{r}
@@ -87,8 +120,6 @@ tidier_wo_stopwords %>%
 ```
 
 ```{r}
-library(ggplot2)
-
 tidier_wo_stopwords %>%
   count(word, sort = TRUE) %>%
   filter(n > 30) %>%
@@ -204,7 +235,7 @@ str(sparse_matrix)
 ```
 
 ```{r}
-txt_lda <- LDA(dtm_matrix, k = 2, control = list(seed = 1234))
+txt_lda <- LDA(dtm_matrix, k = 5, control = list(seed = 1234))
 ```
 
 

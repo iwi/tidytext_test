@@ -4,6 +4,20 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import sys
+import json
+import pickle
+
+# Start by installing PyMedium and running it on a flask
+# https://github.com/enginebai/PyMedium
+
+# go back and repeat
+
+def get_medium_posts_from(username):
+    page = requests.get('http://localhost:5000/@{}/posts'.format(username))
+    soup = str(BeautifulSoup(page.content, 'html.parser'))
+    posts_data = json.loads(soup)
+    urls = list(map((lambda x: x['url']), posts_data))
+    return(urls)
 
 
 def get_text_only(url):
@@ -16,26 +30,40 @@ def get_text_only(url):
 
 
 if __name__ == '__main__':
-    # Urls to get
-    urls = [
-        'https://medium.com/@drryandunn/weeknotes-s02-e01-68af74d9e96b',
-        'https://medium.com/@drryandunn/weeknotes-s01e09-7135e6d4c4d7',
-        'https://medium.com/@drryandunn/weeknotes-s01e08-c50fef5ace1a',
-        'https://medium.com/@drryandunn/weeknotes-s01e07-378ef801057d',
-        'https://medium.com/@drryandunn/weeknotes-s01e06-1f119808daa4',
-        'https://medium.com/@drryandunn/weeknotes-s01e05-6d0020c9b335',
-        'https://productforthepeople.xyz/weeknotes-s01e04-6a21a20ac6b0',
-        'https://productforthepeople.xyz/weeknotes-s01e03-2caaa58a0547',
-        'https://productforthepeople.xyz/weeknotes-s01e02-674e81f44797',
-        'https://productforthepeople.xyz/weeknotes-s01-e01-af39311da6c4'
-    ]
+    # Get the ame of the user 
+    weeknotes_writer = input("Please type the medium username of the weeknotes writer:\n")
 
+    # Get the latest urls from the writer and add them to the old ones
+    latest_urls = get_medium_posts_from(weeknotes_writer)
+    try:
+        with open ("old_url_weeknotes_{}.pkl".format(weeknotes_writer), 'rb') as fp:
+            old_urls = pickle.load(fp)
+    except:
+        old_urls = []
+
+    urls = latest_urls + old_urls
+    urls = set(urls)  # ignore duplicates
+
+    # Save the imported urls for future use
+    with open("old_url_weeknotes_{}.pkl".format(weeknotes_writer), 'wb') as fp:
+            pickle.dump(urls, fp)
+
+    # Get the text from the urls
     texts = []
-
     for url in urls:
         text = get_text_only(url)
         texts.append(text)
 
-    with open("weeknotes_ryan.csv", "w", newline="") as fout:
-        writer = csv.writer(fout, delimiter=',')
+    # Save the text of the weeknotes 
+    with open("weeknotes_{}.csv".format(weeknotes_writer), "w", newline = "") as fout:
+        writer = csv.writer(fout, delimiter = ',')
         writer.writerow(texts)
+
+
+    # old_urls = [
+    #     'https://medium.com/@drryandunn/weekknotes-s01e05-6d0020c9b335',
+    #     'https://productforthepeople.xyz/weeknotes-s01e04-6a21a20ac6b0',
+    #     'https://productforthepeople.xyz/weeknotes-s01e03-2caaa58a0547',
+    #     'https://productforthepeople.xyz/weeknotes-s01e02-674e81f44797',
+    #     'https://productforthepeople.xyz/weeknotes-s01-e01-af39311da6c4'
+    # ]

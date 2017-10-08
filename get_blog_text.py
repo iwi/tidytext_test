@@ -19,7 +19,6 @@ def get_medium_posts_from(username):
     urls = list(map((lambda x: x['url']), posts_data))
     return(urls)
 
-
 def get_text_only(url):
     page = requests.get(url)
     parsed = BeautifulSoup(page.content, 'html.parser')
@@ -37,7 +36,7 @@ if __name__ == '__main__':
     latest_urls = get_medium_posts_from(weeknotes_writer)
     try:
         with open ("old_url_weeknotes_{}.pkl".format(weeknotes_writer), 'rb') as fp:
-            old_urls = pickle.load(fp)
+            old_urls = list(pickle.load(fp))
     except:
         old_urls = []
 
@@ -57,13 +56,10 @@ if __name__ == '__main__':
     # Save the text of the weeknotes 
     with open("weeknotes_{}.csv".format(weeknotes_writer), "w", newline = "") as fout:
         writer = csv.writer(fout, delimiter = ',')
+        writer.writerow(urls)
         writer.writerow(texts)
 
-
-    # old_urls = [
-    #     'https://medium.com/@drryandunn/weekknotes-s01e05-6d0020c9b335',
-    #     'https://productforthepeople.xyz/weeknotes-s01e04-6a21a20ac6b0',
-    #     'https://productforthepeople.xyz/weeknotes-s01e03-2caaa58a0547',
-    #     'https://productforthepeople.xyz/weeknotes-s01e02-674e81f44797',
-    #     'https://productforthepeople.xyz/weeknotes-s01-e01-af39311da6c4'
-    # ]
+        # writer = csv.DictWriter(fout,
+        #                     fieldnames = urls,
+        #                     delimiter = ',')
+        # writer.writerow(texts)

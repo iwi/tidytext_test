@@ -17,18 +17,28 @@ library(koRpus)
 ```
 
 ```{r, message=FALSE, warning=FALSE}
-weeknotes_ryan <- as_tibble(read_csv('weeknotes_ryan.csv', col_names = FALSE))
-names(weeknotes_ryan) <- c( "s02e01",
-                            "s01e09",
-                            "s01e08",
-                            "s01e07",
-                            "s01e06",
-                            "s01e05",
-                            "s01e04",
-                            "s01e03",
-                            "s01e02",      
-                            "s01e01"
-       )
+weeknotes_ryan <- as_tibble(read_csv('weeknotes_drryandunn.csv', col_names = TRUE))
+
+url_names <- names(weeknotes_ryan)
+
+get_season <- function(string){
+  return(str_extract(string, 's\\d+'))
+}
+
+get_episode <- function(string){
+  return(str_extract(string, 'e\\d+'))
+}
+
+create_name <- function(url) {
+  season <- get_season(url)
+  episode <- get_episode(url)
+  name <- paste(season, episode, sep = '_')
+  return(name)
+}
+
+new_names <- map(url_names, create_name)
+names(weeknotes_ryan) <- new_names
+weeknotes_ryan %>% View()
 ```
 
 
@@ -109,7 +119,7 @@ tidier_wo_stopwords %>%
 
 ```{r}
 tidier_wo_stopwords %>% 
-  filter(episode == 's01e01') %>% 
+  filter(episode == 's01_e01') %>% 
   count(word, sort=TRUE)
 ```
 

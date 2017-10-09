@@ -17,7 +17,11 @@ library(koRpus)
 ```
 
 ```{r, message=FALSE, warning=FALSE}
-weeknotes_ryan <- as_tibble(read_csv('weeknotes_drryandunn.csv', col_names = TRUE))
+weeknotes_username <- 'drryandunn'
+```
+
+```{r, message=FALSE, warning=FALSE}
+weeknotes_ryan <- as_tibble(read_csv(paste('weeknotes_', weeknotes_username, '.csv', sep = ''), col_names = TRUE))
 
 url_names <- names(weeknotes_ryan)
 
@@ -38,14 +42,15 @@ create_name <- function(url) {
 
 new_names <- map(url_names, create_name)
 names(weeknotes_ryan) <- new_names
-weeknotes_ryan %>% View()
+weeknotes_ryan %>% str()
 ```
 
 
 
 ```{r}
+length(weeknotes_ryan)
 weeknotes_ryan %>% 
-  gather("episode", "text", 1:10) -> tidy_notes
+  gather("episode", "text", 1:length(weeknotes_ryan)) -> tidy_notes
 ```
 
 ```{r}
@@ -54,13 +59,11 @@ tidy_notes
 
 ```{r}
 tidy_notes %>% 
-  mutate(text2 = gsub("//.", " ", text)) -> tidier_notes
+  mutate(text2 = gsub("[.]", " ", text)) %>% 
+  mutate(text2 = gsub("’", " ", text2)) %>% 
+  mutate(text2 = gsub("‘", " ", text2)) -> tidier_notes
 ```
 
-```{r}
-tidy_notes %>% 
-  mutate(text2 = gsub("[.]", " ", text)) -> tidier_notes
-```
 
 ```{r}
 tidier_notes %>% 
@@ -81,46 +84,64 @@ treetag(tidy_tokens$word,
 ```
 
 ```{r}
-as_tibble(tidy_tokens_tagged@TT.res)
+tidy_tokens_tagged@TT.res %>% 
+  as_tibble() %>% 
+  group_by(wclass) %>% 
+  summarise(count = n()) %>% 
+  mutate(`%` = round(100 * count / sum(count), 1)) %>% 
+  arrange(desc(count))
+```
+
+
+```{r}
+tidy_tokens_tagged@TT.res %>% 
+  as_tibble() %>% 
+  group_by(lemma) %>% 
+  summarise(count = n()) %>% 
+  mutate(`%` = round(100 * count / sum(count), 1)) %>% 
+  arrange(desc(count))
+```
+
+```{r}
+tidy_tokens_tagged@TT.res %>% 
+  as_tibble() %>% 
+  group_by(token) %>% 
+  summarise(count = n()) %>% 
+  mutate(`%` = round(100 * count / sum(count), 1)) %>% 
+  arrange(desc(count))
 ```
 
 ```{r}
 data("stop_words")
-other_stop_words <- c("i’d", "i’m", "i’ve")
+other_stop_words <- c("i’d", "i’m", "i’ve", "’", "ve", "d", "ll", "m")
+stop_words
 ```
 
 ```{r}
 tidy_tokens_tagged@TT.res %>%
   as_tibble() %>% 
+  mutate(episode = tidy_tokens$episode, text = tidy_tokens$text) %>% 
   anti_join(stop_words, by = c("token" = "word")) %>% 
-  filter(!(token %in% other_stop_words)) -> tidier_wo_stopwords
-```
-
-
-```{r}
-tidier_wo_stopwords %>% 
-  filter(str_detect(token, regex("i’d", ignore_case = TRUE)))
-```
-```{r}
-tidier_wo_stopwords %>% 
+  filter(!(token %in% other_stop_words)) %>% 
   rename(word = token) -> tidier_wo_stopwords
 ```
 
 ```{r}
-tidier_wo_stopwords
+tidier_wo_stopwords %>% 
+  group_by(word) %>% 
+  summarise(count = n()) %>% 
+  mutate(`%` = round(100 * count / sum(count), 1)) %>% 
+  arrange(desc(count))
 ```
-
 
 
 ```{r}
 tidier_wo_stopwords %>% 
-  count(word, sort=TRUE)
-```
-
-```{r}
-tidier_wo_stopwords %>% 
-  filter(episode == 's01_e01') %>% 
-  count(word, sort=TRUE)
+  filter(episode == 's02_e01') %>% 
+  group_by(word) %>% 
+  summarise(count = n()) %>% 
+  mutate(`%` = round(100 * count / sum(count), 1)) %>% 
+  arrange(desc(count))
 ```
 
 ```{r}

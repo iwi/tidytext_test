@@ -31,8 +31,6 @@ new_names <- map(url_names, create_name)
 names(weeknotes_ryan) <- new_names
 ```
 
-
-
 ```{r}
 length(weeknotes_ryan)
 weeknotes_ryan %>% 

@@ -25,26 +25,10 @@ weeknotes_username <- 'drryandunn'
 ```{r, message=FALSE, warning=FALSE}
 weeknotes_ryan <- as_tibble(read_csv(paste('weeknotes_', weeknotes_username, '.csv', sep = ''), col_names = TRUE))
 
+# Rename variables converting the original urls to season plus episode names
 url_names <- names(weeknotes_ryan)
-
-get_season <- function(string){
-  return(str_extract(string, 's\\d+'))
-}
-
-get_episode <- function(string){
-  return(str_extract(string, 'e\\d+'))
-}
-
-create_name <- function(url) {
-  season <- get_season(url)
-  episode <- get_episode(url)
-  name <- paste(season, episode, sep = '_')
-  return(name)
-}
-
 new_names <- map(url_names, create_name)
 names(weeknotes_ryan) <- new_names
-weeknotes_ryan %>% str()
 ```
 
 
